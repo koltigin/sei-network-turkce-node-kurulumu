@@ -16,6 +16,7 @@ import (
 	typestx "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/sei-protocol/sei-chain/app"
+	"github.com/sei-protocol/sei-chain/scripts/common"
 	dextypes "github.com/sei-protocol/sei-chain/x/dex/types"
 	"google.golang.org/grpc"
 )
@@ -88,7 +89,7 @@ func run(
 	for i := uint64(0); i < numberOfOrders/BATCH_SIZE; i++ {
 		fmt.Println(fmt.Sprintf("Preparing %d-th order", i))
 		accountIdx := i % numberOfAccounts
-		key := GetKey(accountIdx)
+		key := common.GetKey(accountIdx)
 		orderPlacements := []*dextypes.OrderPlacement{}
 		longPrice := i%(longPriceCeiling-longPriceFloor) + longPriceFloor
 		longQuantity := uint64(rand.Intn(int(quantityCeiling)-int(quantityFloor))) + quantityFloor
@@ -128,8 +129,8 @@ func run(
 		}
 		txBuilder := TEST_CONFIG.TxConfig.NewTxBuilder()
 		_ = txBuilder.SetMsgs(&msg)
-		SignTx(&txBuilder, key)
-		sender := SendTx(key, &txBuilder, &mu)
+		common.SignTx(&txBuilder, key)
+		sender := common.SendTx(key, &txBuilder, &mu)
 		wg.Add(1)
 		senders = append(senders, func() {
 			defer wg.Done()

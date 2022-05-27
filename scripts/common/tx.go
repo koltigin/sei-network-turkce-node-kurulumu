@@ -27,12 +27,13 @@ func SendTx(
 	key cryptotypes.PrivKey,
 	txBuilder *client.TxBuilder,
 	mu *sync.Mutex,
+	sequenceNumber uint64,
 ) func() {
 	(*txBuilder).SetGasLimit(2000000)
 	(*txBuilder).SetFeeAmount([]sdk.Coin{
-		sdk.NewCoin("ust", sdk.NewInt(1000)),
+		sdk.NewCoin("usei", sdk.NewInt(1000)),
 	})
-	SignTx(txBuilder, key)
+	SignTx(txBuilder, key, sequenceNumber)
 	txBytes, _ := TEST_CONFIG.TxConfig.TxEncoder()((*txBuilder).GetTx())
 	return func() {
 		grpcRes, err := TX_CLIENT.BroadcastTx(
@@ -63,9 +64,11 @@ func SendTx(
 		if grpcRes.TxResponse.Code != 0 {
 			fmt.Printf("Error: %d\n", grpcRes.TxResponse.Code)
 		} else {
-			mu.Lock()
-			defer mu.Unlock()
-			TX_HASH_FILE.WriteString(fmt.Sprintf("%s\n", grpcRes.TxResponse.TxHash))
+			if mu != nil {
+				mu.Lock()
+				defer mu.Unlock()
+				TX_HASH_FILE.WriteString(fmt.Sprintf("%s\n", grpcRes.TxResponse.TxHash))
+			}
 		}
 	}
 }
@@ -98,12 +101,12 @@ func GetLimitOrderTxBuilder(
 			"quantity":           strconv.FormatUint(quantity, 10),
 			"position_direction": direction,
 			"position_effect":    effect,
-			"price_denom":        "ust",
+			"price_denom":        "usei",
 			"asset_denom":        "luna",
 			"nonce":              nonce,
 		},
 	}
-	amount, err := sdk.ParseCoinsNormalized(fmt.Sprintf("%d%s", price*quantity, "ust"))
+	amount, err := sdk.ParseCoinsNormalized(fmt.Sprintf("%d%s", price*quantity, "usei"))
 	if err != nil {
 		panic(err)
 	}
@@ -146,12 +149,12 @@ func GetMarketOrderTxBuilder(
 			"quantity":           strconv.FormatUint(quantity, 10),
 			"position_direction": direction,
 			"position_effect":    effect,
-			"price_denom":        "ust",
+			"price_denom":        "usei",
 			"asset_denom":        "luna",
 			"nonce":              nonce,
 		},
 	}
-	amount, err := sdk.ParseCoinsNormalized(fmt.Sprintf("%d%s", price*quantity, "ust"))
+	amount, err := sdk.ParseCoinsNormalized(fmt.Sprintf("%d%s", price*quantity, "usei"))
 	if err != nil {
 		panic(err)
 	}

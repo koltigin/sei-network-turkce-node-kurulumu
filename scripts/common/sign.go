@@ -26,9 +26,9 @@ type AccountInfo struct {
 	Mnemonic string `json:"mnemonic"`
 }
 
-func GetKey(accountIdx uint64) cryptotypes.PrivKey {
+func GetKey(keyname string) cryptotypes.PrivKey {
 	userHomeDir, _ := os.UserHomeDir()
-	accountKeyFilePath := filepath.Join(userHomeDir, "test_accounts", fmt.Sprintf("ta%d.json", accountIdx))
+	accountKeyFilePath := filepath.Join(userHomeDir, "test_accounts", fmt.Sprintf("%s.json", keyname))
 	jsonFile, err := os.Open(accountKeyFilePath)
 	if err != nil {
 		panic(err)
@@ -49,7 +49,7 @@ func GetKey(accountIdx uint64) cryptotypes.PrivKey {
 	return algo.Generate()(derivedPriv)
 }
 
-func SignTx(txBuilder *client.TxBuilder, privKey cryptotypes.PrivKey) {
+func SignTx(txBuilder *client.TxBuilder, privKey cryptotypes.PrivKey, sequenceNum uint64) {
 	var sigsV2 []signing.SignatureV2
 	sigV2 := signing.SignatureV2{
 		PubKey: privKey.PubKey(),
@@ -57,7 +57,7 @@ func SignTx(txBuilder *client.TxBuilder, privKey cryptotypes.PrivKey) {
 			SignMode:  TEST_CONFIG.TxConfig.SignModeHandler().DefaultMode(),
 			Signature: nil,
 		},
-		Sequence: 0,
+		Sequence: sequenceNum,
 	}
 	sigsV2 = append(sigsV2, sigV2)
 	_ = (*txBuilder).SetSignatures(sigsV2...)
@@ -65,7 +65,7 @@ func SignTx(txBuilder *client.TxBuilder, privKey cryptotypes.PrivKey) {
 	signerData := xauthsigning.SignerData{
 		ChainID:       CHAIN_ID,
 		AccountNumber: GetAccountNumber(privKey),
-		Sequence:      0,
+		Sequence:      sequenceNum,
 	}
 	sigV2, _ = clienttx.SignWithPrivKey(
 		TEST_CONFIG.TxConfig.SignModeHandler().DefaultMode(),
@@ -73,7 +73,7 @@ func SignTx(txBuilder *client.TxBuilder, privKey cryptotypes.PrivKey) {
 		*txBuilder,
 		privKey,
 		TEST_CONFIG.TxConfig,
-		0,
+		sequenceNum,
 	)
 	sigsV2 = append(sigsV2, sigV2)
 	_ = (*txBuilder).SetSignatures(sigsV2...)

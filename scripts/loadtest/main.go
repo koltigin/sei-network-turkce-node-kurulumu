@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
@@ -21,21 +20,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-type EncodingConfig struct {
-	InterfaceRegistry types.InterfaceRegistry
-	// NOTE: this field will be renamed to Codec
-	Marshaler codec.Codec
-	TxConfig  client.TxConfig
-	Amino     *codec.LegacyAmino
-}
-
-var (
-	TEST_CONFIG  EncodingConfig
-	TX_CLIENT    typestx.ServiceClient
-	TX_HASH_FILE *os.File
-	CHAIN_ID     string
-)
-
 const BATCH_SIZE = 100
 
 func init() {
@@ -43,16 +27,16 @@ func init() {
 	interfaceRegistry := types.NewInterfaceRegistry()
 	marshaler := codec.NewProtoCodec(interfaceRegistry)
 
-	TEST_CONFIG = EncodingConfig{
+	common.TEST_CONFIG = common.EncodingConfig{
 		InterfaceRegistry: interfaceRegistry,
 		Marshaler:         marshaler,
 		TxConfig:          tx.NewTxConfig(marshaler, tx.DefaultSignModes),
 		Amino:             cdc,
 	}
-	std.RegisterLegacyAminoCodec(TEST_CONFIG.Amino)
-	std.RegisterInterfaces(TEST_CONFIG.InterfaceRegistry)
-	app.ModuleBasics.RegisterLegacyAminoCodec(TEST_CONFIG.Amino)
-	app.ModuleBasics.RegisterInterfaces(TEST_CONFIG.InterfaceRegistry)
+	std.RegisterLegacyAminoCodec(common.TEST_CONFIG.Amino)
+	std.RegisterInterfaces(common.TEST_CONFIG.InterfaceRegistry)
+	app.ModuleBasics.RegisterLegacyAminoCodec(common.TEST_CONFIG.Amino)
+	app.ModuleBasics.RegisterInterfaces(common.TEST_CONFIG.InterfaceRegistry)
 }
 
 func run(
@@ -71,7 +55,7 @@ func run(
 		grpc.WithInsecure(),
 	)
 	defer grpcConn.Close()
-	TX_CLIENT = typestx.NewServiceClient(grpcConn)
+	common.TX_CLIENT = typestx.NewServiceClient(grpcConn)
 	userHomeDir, _ := os.UserHomeDir()
 	filename := filepath.Join(userHomeDir, "outputs", "test_tx_hash")
 	_ = os.Remove(filename)
@@ -80,7 +64,7 @@ func run(
 		fmt.Printf("Error opening file %s", err)
 		return
 	}
-	TX_HASH_FILE = file
+	common.TX_HASH_FILE = file
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
@@ -89,7 +73,7 @@ func run(
 	for i := uint64(0); i < numberOfOrders/BATCH_SIZE; i++ {
 		fmt.Println(fmt.Sprintf("Preparing %d-th order", i))
 		accountIdx := i % numberOfAccounts
-		key := common.GetKey(accountIdx)
+		key := common.GetKey(fmt.Sprintf("ta%d", accountIdx))
 		orderPlacements := []*dextypes.OrderPlacement{}
 		longPrice := i%(longPriceCeiling-longPriceFloor) + longPriceFloor
 		longQuantity := uint64(rand.Intn(int(quantityCeiling)-int(quantityFloor))) + quantityFloor
@@ -100,7 +84,7 @@ func run(
 				Long:       true,
 				Price:      longPrice,
 				Quantity:   longQuantity,
-				PriceDenom: "ust",
+				PriceDenom: "usei",
 				AssetDenom: "luna",
 				Open:       true,
 				Limit:      true,
@@ -109,14 +93,14 @@ func run(
 				Long:       false,
 				Price:      shortPrice,
 				Quantity:   shortQuantity,
-				PriceDenom: "ust",
+				PriceDenom: "usei",
 				AssetDenom: "luna",
 				Open:       true,
 				Limit:      true,
 				Leverage:   "1",
 			})
 		}
-		amount, err := sdk.ParseCoinsNormalized(fmt.Sprintf("%d%s", longPrice*longQuantity+shortPrice*shortQuantity, "ust"))
+		amount, err := sdk.ParseCoinsNormalized(fmt.Sprintf("%d%s", longPrice*longQuantity+shortPrice*shortQuantity, "usei"))
 		if err != nil {
 			panic(err)
 		}
@@ -127,10 +111,9 @@ func run(
 			Nonce:        i,
 			Funds:        amount,
 		}
-		txBuilder := TEST_CONFIG.TxConfig.NewTxBuilder()
+		txBuilder := common.TEST_CONFIG.TxConfig.NewTxBuilder()
 		_ = txBuilder.SetMsgs(&msg)
-		common.SignTx(&txBuilder, key)
-		sender := common.SendTx(key, &txBuilder, &mu)
+		sender := common.SendTx(key, &txBuilder, &mu, 0)
 		wg.Add(1)
 		senders = append(senders, func() {
 			defer wg.Done()
@@ -157,7 +140,7 @@ func main() {
 	quantityFloor, _ := strconv.ParseUint(args[7], 10, 64)
 	quantityCeiling, _ := strconv.ParseUint(args[8], 10, 64)
 	chainId := args[9]
-	CHAIN_ID = chainId
+	common.CHAIN_ID = chainId
 	run(
 		contractAddress,
 		numberOfAccounts,

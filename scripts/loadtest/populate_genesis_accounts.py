@@ -3,7 +3,7 @@ import os
 import subprocess
 import sys
 
-def add_genesis_account(account_name, local=False):
+def add_genesis_account(account_name, amount, local=False):
     if local:
         add_key_cmd = f"yes | ./build/seid keys add {account_name}"
     else:
@@ -17,9 +17,9 @@ def add_genesis_account(account_name, local=False):
     address = splitted_outputs[3].split(': ')[1]
     mnemonic = splitted_outputs[11]
     if local:
-        add_account_cmd = f"./build/seid add-genesis-account {address} 1000000000ust"
+        add_account_cmd = f"./build/seid add-genesis-account {address} {amount}"
     else:
-        add_account_cmd = f"printf '12345678\n' | ./build/seid add-genesis-account {address} 1000000000ust"
+        add_account_cmd = f"printf '12345678\n' | ./build/seid add-genesis-account {address} {amount}"
 
     home_path = os.path.expanduser('~')
     filename = f"{home_path}/test_accounts/{account_name}.json"
@@ -35,18 +35,21 @@ def add_genesis_account(account_name, local=False):
         shell=True,
     )
 
-def bulk_create_genesis_accounts(number_of_accounts, is_local=False):
+def bulk_create_genesis_accounts(number_of_accounts, amount, is_local=False):
     for i in range(number_of_accounts):
         print(f"Creating account {i}")
-        add_genesis_account(f"ta{i}", is_local)
+        add_genesis_account(f"ta{i}", amount, is_local)
 
 def main():
     args = sys.argv[1:]
+    if args[0] == "single":
+        add_genesis_account(args[1], args[2], True)
+        return
     number_of_accounts = int(args[0])
     is_local = False
-    if len(args) > 1 and args[1] == "loc":
+    if len(args) > 2 and args[2] == "loc":
         is_local = True
-    bulk_create_genesis_accounts(number_of_accounts, is_local)
+    bulk_create_genesis_accounts(number_of_accounts, args[1], is_local)
 
 if __name__ == "__main__":
     main()

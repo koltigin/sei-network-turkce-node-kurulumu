@@ -11,14 +11,19 @@ import (
 
 var _ = strconv.Itoa(0)
 
-func CmdGetTwap() *cobra.Command {
+func CmdGetPrice() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get-twap [price-denom] [asset-denom]",
-		Short: "Query getTwap",
-		Args:  cobra.ExactArgs(2),
+		Use:   "get-price [contract-address] [epoch] [price-denom] [asset-denom]",
+		Short: "Query getPrice",
+		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			reqPriceDenom := args[0]
-			reqAssetDenom := args[1]
+			reqContractAddr := args[0]
+			reqEpoch, err := strconv.ParseUint(args[1], 10, 64)
+			if err != nil {
+				return err
+			}
+			reqPriceDenom := args[2]
+			reqAssetDenom := args[3]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -27,12 +32,14 @@ func CmdGetTwap() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := &types.QueryGetTwapRequest{
-				PriceDenom: reqPriceDenom,
-				AssetDenom: reqAssetDenom,
+			params := &types.QueryGetPriceRequest{
+				ContractAddr: reqContractAddr,
+				Epoch:        reqEpoch,
+				PriceDenom:   reqPriceDenom,
+				AssetDenom:   reqAssetDenom,
 			}
 
-			res, err := queryClient.GetTwap(cmd.Context(), params)
+			res, err := queryClient.GetPrice(cmd.Context(), params)
 			if err != nil {
 				return err
 			}

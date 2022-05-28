@@ -48,6 +48,10 @@ func TwapPrefix(contractAddr string) []byte {
 	return append(KeyPrefix(TwapKey), KeyPrefix(contractAddr)...)
 }
 
+func PricePrefix(contractAddr string) []byte {
+	return append(KeyPrefix(PriceKey), KeyPrefix(contractAddr)...)
+}
+
 func SettlementEntryPrefix(contractAddr string, blockHeight uint64) []byte {
 	return append(
 		append(KeyPrefix(SettlementEntryKey), KeyPrefix(contractAddr)...),
@@ -85,6 +89,7 @@ const (
 )
 
 const TwapKey = "TWAP-"
+const PriceKey = "Price-"
 
 const SettlementEntryKey = "SettlementEntry-"
 

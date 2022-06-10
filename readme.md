@@ -1,122 +1,174 @@
-# Sei
+# Sei Network Türkçe Node Kurulum Rehberi
 
 ![Banner!](assets/SeiLogo.png)
 
-Sei Network is the first orderbook-specific L1 blockchain. The chain emphasizes reliability, security and high throughput above all else, enabling an entirely new echelon of ultra-high performance DeFi products built on top. Sei's on-chain CLOB and matching engine provides deep liquidity and price-time-priority matching for traders and apps. Apps built on Sei benefit from built-in orderbook infrastructure, deep liquidity, and a fully decentralized matching service. Users benefit from this exchange model with the ability to select price, size, and direction of their trades coupled with MEV protection.
-
-# seichain
-**seichain** is a blockchain built using Cosmos SDK and Tendermint. It is built using the Cosmos SDK and Tendermint core, and features a built-in central limit orderbook (CLOB) module. Decentralized applications building on Sei can build on top of the CLOB, and other Cosmos-based blockchains can leverage Sei's CLOB as a shared liquidity hub and create markets for any asset. Sei Shared Liquidity Model
-
-Designed with developers and users in mind, Sei serves as the infrastructure and shared liquidity hub for the next generation of DeFi. Apps can easily plug-and-play to trade on Sei orderbook infrastructure and access pooled liquidity from other apps. To prioritize developer experience, Sei Network has integrated the wasmd module to support CosmWasm smart contracts.
-
-## Get started
-**How to validate on the Sei Testnet**
-*This is the Sei Testnet-1 (sei-testnet-1)*
-
-> Genesis [Published](https://github.com/sei-protocol/testnet/blob/main/sei-testnet-1/genesis.json)
-
-> Peers [Published](https://github.com/sei-protocol/testnet/blob/main/sei-testnet-1/addrbook.json)
-
-## Hardware Requirements
+## Sistem Gereksinimleri
 **Minimum**
 * 8 GB RAM
 * 100 GB NVME SSD
 * 3.2 GHz x4 CPU
 
-**Recommended**
+**Önerilen**
 * 16 GB RAM
 * 500 GB NVME SSD
 * 4.2 GHz x6 CPU 
 
-## Operating System 
+# Makinemizi güncelliyoruz:
 
-> Linux (x86_64) or Linux (amd64) Reccomended Arch Linux
-
-**Dependencies**
-> Prerequisite: go1.18+ required.
-* Arch Linux: `pacman -S go`
-* Ubuntu: `sudo snap install go --classic`
-
-> Prerequisite: git. 
-* Arch Linux: `pacman -S git`
-* Ubuntu: `sudo apt-get install git`
-
-> Optional requirement: GNU make. 
-* Arch Linux: `pacman -S make`
-* Ubuntu: `sudo apt-get install make`
-
-## Seid Installation Steps
-
-**Clone git repository**
-
-```bash
-git clone https://github.com/sei-protocol/sei-chain
-cd sei-chain
-git checkout origin/1.0.1beta-upgrade
-make install
-mv $HOME/go/bin/seid /usr/bin/
 ```
-**Generate keys**
+sudo apt-get update && apt-get upgrade -y
+```
 
-* `seid keys add [key_name]`
+# Gerekli araçların yüklemesini yapıyoruz:
+```
+sudo apt install make clang pkg-config libssl-dev build-essential git jq ncdu bsdmainutils htop -y < "/dev/null"
+```
+# Go kurulumumuzu yapıyoruz:
+```
+wget -O go1.18.1.linux-amd64.tar.gz https://golang.org/dl/go1.18.1.linux-amd64.tar.gz
+rm -rf /usr/local/go && tar -C /usr/local -xzf go1.18.1.linux-amd64.tar.gz && rm go1.18.1.linux-amd64.tar.gz
+echo 'export GOROOT=/usr/local/go' >> $HOME/.bash_profile
+echo 'export GOPATH=$HOME/go' >> $HOME/.bash_profile
+echo 'export GO111MODULE=on' >> $HOME/.bash_profile
+echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> $HOME/.bash_profile && . $HOME/.bash_profile
+go version
+```
 
-* `seid keys add [key_name] --recover` to regenerate keys with your mnemonic
+# Githubtan dosyaları indiriyoruz:
+```
+git clone --depth 1 --branch 1.0.2beta https://github.com/sei-protocol/sei-chain.git
+```
 
-* `seid keys add [key_name] --ledger` to generate keys with ledger device
+# sei-chain dosyasına girerek kurulum yapıyoruz.
+```
+cd sei-chain/
+make install
+```
 
-## Validator setup instructions
+# Moniker name giriyoruz. Tırnak arasındaki YOUR_MONKER kısmına kendi ismimizi giriyoruz:
+```
+export MONIKER="YOUR_MONIKER"
+```
 
-* Install seid binary
+# Moniker init ediyoruz:
+```
+seid init $MONIKER --chain-id sei-testnet-2 -o
+```
+# Genesis dosyasını indiriyoruz:
+```
+wget -qO $HOME/.sei/config/genesis.json "https://raw.githubusercontent.com/sei-protocol/testnet/main/sei-testnet-2/genesis.json"
+```
+# Addrbook.json dosyasını indiriyoruz:
+```
+wget -qO $HOME/.sei/config/addrbook.json "https://raw.githubusercontent.com/sei-protocol/testnet/main/sei-testnet-2/addrbook.json"
+```
+# Screen aracımızın kurulumunu yapıyoruz: 
+```
+apt-get install screen
+```
+# screen oturumu açıyoruz:
+```
+screen -S sei
+```
+# screen içinde node'u başlatıyoruz.
+```
+seid start
+```
+# node durumuna bakmak için:
+```
+seid status
+```
+# Pruning yapıyoruz:
+```
+pruning="custom"
+pruning_keep_recent="100"
+pruning_keep_every="0"
+pruning_interval="10"
 
-* Initialize node: `seid init <moniker> --chain-id sei-testnet-1`
-
-* Download the Genesis file: `https://github.com/sei-protocol/testnet/raw/main/sei-testnet-1/genesis.json -P $HOME/.sei/config/`
- 
-* Edit the minimum-gas-prices in ${HOME}/.sei/config/app.toml: `sed -i 's/minimum-gas-prices = ""/minimum-gas-prices = "0.01usei"/g' $HOME/.sei/config/app.toml`
-
-* Start seid by creating a systemd service to run the node in the background
-`nano /etc/systemd/system/seid.service`
-> Copy and paste the following text into your service file. Be sure to edit as you see fit.
-
-```bash
+sed -i -e "s/^pruning *=.*/pruning = \"$pruning\"/" $HOME/.sei/config/app.toml
+sed -i -e "s/^pruning-keep-recent *=.*/pruning-keep-recent = \"$pruning_keep_recent\"/" $HOME/.sei/config/app.toml
+sed -i -e "s/^pruning-keep-every *=.*/pruning-keep-every = \"$pruning_keep_every\"/" $HOME/.sei/config/app.toml
+sed -i -e "s/^pruning-interval *=.*/pruning-interval = \"$pruning_interval\"/" $HOME/.sei/config/app.toml
+```
+# servis dosyamızı oluşturuyoruz: 
+```
+tee $HOME/seid.service > /dev/null <<EOF
 [Unit]
-Description=Sei-Network Node
+Description=seid
 After=network.target
-
 [Service]
 Type=simple
-User=root
-WorkingDirectory=/root/
-ExecStart=/root/go/bin/seid start
+User=$USER
+ExecStart=$(which seid) start
 Restart=on-failure
-StartLimitInterval=0
-RestartSec=3
+RestartSec=10
 LimitNOFILE=65535
-LimitMEMLOCK=209715200
-
 [Install]
 WantedBy=multi-user.target
+EOF
+[/CODE]
 ```
-## Start the node
-* Reload the service files: `sudo systemctl daemon-reload` 
-* Create the symlinlk: `sudo systemctl enable seid.service` 
-* Start the node sudo: `systemctl start seid && journalctl -u seid -f`
+# Systemctl tekrar yüklüyoruz:
+```
+sudo systemctl daemon-reload
+```
+# Servisimizi aktifleştiriyoruz:
+```
+sudo systemctl enable seid
+```
+# Son olarak servisimizi başlatıyoruz:
+```
+sudo systemctl start seid
+```
+# Servisimizin durumuna bakmak için:
+```
+systemctl status seid
+```
+# Cüzdan oluşturuyoruz. oluşan tüm cüzdan bilgilerini not ediyoruz:
+```
+seid keys add wallet_Name
+```
+# Discord grubuna girip faucet kanalından token talep ediyoruz: 
+```
+https://discord.gg/BFrveY5t
+```
+Not: Şu an faucet çalışmıyor, çalıştığı zaman deneyin.
 
-### Create Validator Transaction
-```bash
-seid tx staking create-validator \
---from {{KEY_NAME}} \
---chain-id  \
---moniker="<VALIDATOR_NAME>" \
---commission-max-change-rate=0.01 \
---commission-max-rate=1.0 \
---commission-rate=0.05 \
---details="<description>" \
---security-contact="<contact_information>" \
---website="<your_website>" \
---pubkey $(seid tendermint show-validator) \
---min-self-delegation="1" \
---amount <token delegation>usei \
---node localhost:26657
+# Validator oluşturuyoruz. cüzdan_adı kısmına kendi yukarıda belirttiğimiz cüzdan adını yazıyoruz.
 ```
+PUBKEY=$(seid tendermint show-validator)
+seid tx staking create-validator \
+--amount=1000000usei \
+--pubkey=$PUBKEY \
+--moniker=$MONIKER \
+--chain-id=$CHAIN_ID \
+--from=cüzdan_adı \
+--commission-rate="0.10" \
+--commission-max-rate="0.20" \
+--commission-max-change-rate="0.01" \
+--min-self-delegation="1"
+```
+# Exproler:
+https://sei.explorers.guru/
+
+# DAHA FAZLA SORUNUZ VARSA SEİ TÜRKİYE TELEGRAM GRUBU:
+
+[Telegram](https://t.me/SeiNetworkTurkish)
+
+Herkese başarılar.
+
+
+# Hesaplar:
+
+[Twitter](https://twitter.commehmetkoltigin)
+
+[Forum](https://forum.rues.info/index.php)
+
+[Telegram Announcement](https://t.me/RuesAnnouncement)
+
+[Telegram Chat](https://t.me/RuesChat)
+
+[Telegram Node](https://t.me/RuesNode)
+
+[Telegram Node Chat](https://t.me/RuesNodeChat)
 

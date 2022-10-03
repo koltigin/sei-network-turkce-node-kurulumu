@@ -151,24 +151,24 @@ seid tx staking create-validator \
 # Exproler:
 https://sei.explorers.guru/
 
-# DAHA FAZLA SORUNUZ VARSA SEİ TÜRKİYE TELEGRAM GRUBU:
+# DAHA FAZLA SORUNUZ VARSA SEI TÜRKİYE TELEGRAM GRUBU:
 
-[Telegram](https://t.me/SeiNetworkTurkish)
+[Telegram](https://t.me/seinetworktr)
 
 Herkese başarılar.
 
 
 # Hesaplar:
 
+[Anatolian Team](https://anatolianteam.com)
+
 [Twitter](https://twitter.commehmetkoltigin)
 
-[Forum](https://forum.rues.info/index.php)
+[Medium](https://medium.com/@mehmetkoltigin)
 
-[Telegram Announcement](https://t.me/RuesAnnouncement)
+[YouTube](https://www.youtube.com/channel/UCmLgaftx5e38BE0E7gpY2dA)
 
-[Telegram Chat](https://t.me/RuesChat)
+[Discord](https://discordapp.com/users/837933958280904737)
 
-[Telegram Node](https://t.me/RuesNode)
-
-[Telegram Node Chat](https://t.me/RuesNodeChat)
+[Telegram](https://t.me/mehmetkoltigin)
 
